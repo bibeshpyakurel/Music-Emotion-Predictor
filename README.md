@@ -1,56 +1,100 @@
-# 🎵 Music Emotion Predictor: Unlocking Emotions in Music
+# Music Emotion Predictor
 
-# ✨ Project Overview
-Welcome to Music Emotion Predictor! This project delves into the fascinating world of music emotion recognition, leveraging machine learning to predict the emotional "vibe" of a song based on its audio features. Ever wondered if a track is more "Energetic" or "Calm"? This model aims to provide insights into the emotional landscape embedded within musical compositions.
+Machine-learning pipeline for predicting music emotion classes (`Calm`, `Sad`, `Energetic`, `Happy`) from audio features.
 
-We explore both supervised and unsupervised learning techniques to classify music into four distinct emotional categories: Calm, Sad, Energetic, and Happy.
+The original notebook-based workflow is preserved in `music_emotion_prediction.ipynb`. This repository also includes a production-ready Python package and CLI for reproducible runs, robust evaluation, and artifact tracking.
 
-# 🚀 Key Features
-Emotion Prediction: Classifies music into 4 core emotional states.
+## What is included
 
-Multiple ML Models: Implements and compares:
+- Supervised models:
+  - Decision Tree Classifier
+  - K-Nearest Neighbors (KNN)
+- Unsupervised model:
+  - KMeans clustering (evaluated with ARI)
+- Evaluation hardening:
+  - Holdout metrics: accuracy, macro-F1, weighted-F1
+  - Stratified cross-validation for Decision Tree and KNN
+- Artifact persistence:
+  - Saved scaler and trained models (`joblib`)
+  - Run metadata and metrics JSON
+  - Top feature importances and energy-cluster summary CSVs
+- CI quality gate:
+  - Lint (`ruff`), tests (`pytest`), package build
 
-Decision Tree Classifier
+## Project structure
 
-K-Nearest Neighbors (KNN) Classifier
+- `music_emotion_prediction.ipynb`: original exploratory notebook
+- `src/music_emotion_predictor/`: reusable package and CLI
+- `tests/`: automated tests
+- `data/sample_music_dataset.csv`: tiny bundled sample for quick validation
+- `.github/workflows/ci.yml`: CI pipeline
+- `artifacts/`: generated run outputs (created at runtime)
 
-K-Means Clustering (for unsupervised grouping)
+## Setup
 
-Comprehensive Data Preprocessing: Includes robust feature scaling and data splitting.
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+pip install -e .
+```
 
-Interactive Visualizations: Utilizes matplotlib, seaborn, and plotly for insightful data exploration and result representation.
+For contributor tooling (lint + tests via extras):
 
-Modular Codebase: Organized within a Jupyter Notebook for easy understanding and execution.
+```bash
+pip install -e ".[dev]"
+```
 
-# 💡 How It Works
-Data Acquisition: The project starts by loading a rich dataset containing various audio features and pre-labeled emotional categories for a vast collection of music tracks.
+## Run the pipeline
 
-Feature Engineering & Preprocessing: Raw audio features (like danceability, energy, valence, tempo, etc.) are prepared for model training. This involves cleaning, feature selection, and scaling to ensure optimal model performance.
+Quick smoke run with bundled sample data:
 
-Model Training: Supervised learning models (Decision Tree, KNN) are trained on the labeled data, learning the patterns that distinguish different emotions. An unsupervised model (K-Means) groups similar songs based on their features.
+```bash
+music-emotion-predict --dataset data/sample_music_dataset.csv
+```
 
-Emotion Prediction & Evaluation: The trained models then predict emotions on unseen music data. Their performance is evaluated using appropriate metrics, and the distribution of predicted moods is visualized.
+Run with your full dataset export:
 
-# 🛠️ Technologies Used
-This project is built using the following powerful tools and libraries:
+```bash
+music-emotion-predict --dataset /path/to/278k_labelled_uri.csv --test-size 0.2 --random-state 42 --cv-folds 5
+```
 
-Python
+Disable artifact writes:
 
-Jupyter Notebook
+```bash
+music-emotion-predict --no-save-artifacts
+```
 
-Pandas
+Print full metrics JSON in terminal:
 
-NumPy
+```bash
+music-emotion-predict --json
+```
 
-Scikit-learn
+## Tests and quality
 
-Matplotlib
+```bash
+python3 -m pytest
+ruff check src tests
+```
 
-Seaborn
+## Artifact outputs
 
-Plotly
+By default, each run writes a timestamped directory under `artifacts/` containing:
 
-# 📊 Dataset
-The core of this project relies on the 278k_labelled_uri.csv dataset. This comprehensive dataset provides a rich collection of audio features (e.g., duration, danceability, energy, loudness, speechiness, acousticness, instrumentalness, liveness, valence, tempo, spec_rate) coupled with pre-assigned emotional labels.
+- `scaler.joblib`
+- `decision_tree.joblib`
+- `knn.joblib`
+- `metrics.json`
+- `metadata.json`
+- `top_features.csv`
+- `energy_cluster_summary.csv`
 
-Source: https://www.kaggle.com/datasets/abdullahorzan/moodify-dataset 
+## Dataset notes
+
+- Source (Kaggle): https://www.kaggle.com/datasets/abdullahorzan/moodify-dataset
+- Expected requirements:
+  - CSV file must be non-empty
+  - `labels` column must exist
+  - feature columns must be numeric
+- Optional columns like `uri`, `Unnamed: 0`, and `Unnamed: 0.1` are dropped automatically if present.
