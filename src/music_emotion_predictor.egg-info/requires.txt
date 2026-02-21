@@ -1,0 +1,11 @@
+joblib
+numpy
+pandas
+matplotlib
+plotly
+seaborn
+scikit-learn
+
+[dev]
+pytest
+ruff

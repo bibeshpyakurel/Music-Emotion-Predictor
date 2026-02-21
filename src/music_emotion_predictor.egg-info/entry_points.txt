@@ -1,0 +1,2 @@
+[console_scripts]
+music-emotion-predict = music_emotion_predictor.cli:main

@@ -1,0 +1,15 @@
+README.md
+pyproject.toml
+src/music_emotion_predictor/__init__.py
+src/music_emotion_predictor/cli.py
+src/music_emotion_predictor/data.py
+src/music_emotion_predictor/pipeline.py
+src/music_emotion_predictor/validation.py
+src/music_emotion_predictor.egg-info/PKG-INFO
+src/music_emotion_predictor.egg-info/SOURCES.txt
+src/music_emotion_predictor.egg-info/dependency_links.txt
+src/music_emotion_predictor.egg-info/entry_points.txt
+src/music_emotion_predictor.egg-info/requires.txt
+src/music_emotion_predictor.egg-info/top_level.txt
+tests/test_pipeline.py
+tests/test_validation.py
