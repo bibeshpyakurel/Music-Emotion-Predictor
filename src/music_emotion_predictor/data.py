@@ -6,9 +6,12 @@ import pandas as pd
 
 from .validation import (
     DatasetBundle,
+    DatasetError,
     load_and_validate_dataset,
     validate_supervised_dataframe,
 )
+
+__all__ = ["DatasetBundle", "DatasetError", "load_dataset", "prepare_supervised_data"]
 
 
 def load_dataset(path: str | Path) -> pd.DataFrame:
