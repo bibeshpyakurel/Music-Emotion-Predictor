@@ -4,8 +4,8 @@ import argparse
 import json
 from pathlib import Path
 
-from .data import DatasetError
 from .pipeline import run_pipeline
+from .validation import ALLOWED_LABELS, DatasetError
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -14,12 +14,21 @@ def _build_parser() -> argparse.ArgumentParser:
         "--dataset",
         type=Path,
         default=Path("data/sample_music_dataset.csv"),
-        help="Path to the CSV dataset",
+        help=(
+            "Path to the CSV dataset. Required label values: "
+            + ", ".join(sorted(ALLOWED_LABELS))
+        ),
     )
     parser.add_argument("--test-size", type=float, default=0.2)
     parser.add_argument("--random-state", type=int, default=42)
     parser.add_argument("--cv-folds", type=int, default=5)
     parser.add_argument("--top-features", type=int, default=8)
+    parser.add_argument(
+        "--nan-strategy",
+        choices=("drop", "impute"),
+        default="drop",
+        help="How to handle missing numeric feature values",
+    )
     parser.add_argument(
         "--artifacts-dir",
         type=Path,
@@ -44,18 +53,28 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
+        def validation_log(message: str) -> None:
+            print(f"[validation] {message}")
+
         result = run_pipeline(
             dataset=args.dataset,
             test_size=args.test_size,
             random_state=args.random_state,
             cv_folds=args.cv_folds,
             artifacts_dir=None if args.no_save_artifacts else args.artifacts_dir,
+            nan_strategy=args.nan_strategy,
+            logger=validation_log,
         )
     except (DatasetError, ValueError) as exc:
         print(f"Error: {exc}")
         return 1
 
     print("Holdout Metrics")
+    print(
+        f"- Majority Baseline: accuracy={result.majority_baseline_metrics.accuracy:.4f}, "
+        f"macro_f1={result.majority_baseline_metrics.macro_f1:.4f}, "
+        f"weighted_f1={result.majority_baseline_metrics.weighted_f1:.4f}"
+    )
     print(
         f"- Decision Tree: accuracy={result.decision_tree_metrics.accuracy:.4f}, "
         f"macro_f1={result.decision_tree_metrics.macro_f1:.4f}, "
@@ -65,6 +84,12 @@ def main() -> int:
         f"- KNN: accuracy={result.knn_metrics.accuracy:.4f}, "
         f"macro_f1={result.knn_metrics.macro_f1:.4f}, "
         f"weighted_f1={result.knn_metrics.weighted_f1:.4f}"
+    )
+    print(
+        "- Logistic Regression: "
+        f"accuracy={result.logistic_regression_metrics.accuracy:.4f}, "
+        f"macro_f1={result.logistic_regression_metrics.macro_f1:.4f}, "
+        f"weighted_f1={result.logistic_regression_metrics.weighted_f1:.4f}"
     )
     print(f"- KMeans ARI: {result.kmeans_ari:.4f}")
 

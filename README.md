@@ -1,27 +1,54 @@
 # Music Emotion Predictor
 
-Machine-learning pipeline for predicting music emotion classes (`Calm`, `Sad`, `Energetic`, `Happy`) from audio features.
+[![CI](https://img.shields.io/badge/CI-passing_placeholder-lightgrey)](#)
+[![Python](https://img.shields.io/badge/python-3.10%2B-blue)](#)
+[![License](https://img.shields.io/badge/license-MIT_placeholder-lightgrey)](#)
 
-The original notebook-based workflow is preserved in `music_emotion_prediction.ipynb`. This repository also includes a production-ready Python package and CLI for reproducible runs, robust evaluation, and artifact tracking.
+## Elevator Pitch
+- End-to-end ML pipeline that predicts music emotion classes from tabular audio features.
+- Built as a reusable Python package + CLI, not just a notebook experiment.
+- Compares supervised baselines (Majority, Decision Tree, KNN, Logistic Regression) plus KMeans ARI.
+- Ships reproducible evaluation with stratified CV, holdout metrics, and structured artifacts.
+- Includes CI, tests, and run registry tracking for portfolio-ready engineering rigor.
 
-## What is included
+## Architecture
+
+```text
+CSV Dataset
+   |
+   v
+validation.py  ---> schema checks, label checks, numeric coercion, NaN strategy
+   |
+   v
+pipeline.py    ---> split + scale + train/evaluate models + cluster analysis
+   |                  (Majority, DT, KNN, Logistic, KMeans ARI)
+   +--> artifacts/ ---> model files, metrics, reports, summaries, index.jsonl
+   |
+   v
+cli.py         ---> human-readable output + optional JSON
+```
+
+## What Is Included
 
 - Supervised models:
+  - Majority-class baseline
   - Decision Tree Classifier
   - K-Nearest Neighbors (KNN)
+  - Logistic Regression (standardized features)
 - Unsupervised model:
   - KMeans clustering (evaluated with ARI)
-- Evaluation hardening:
+- Evaluation:
   - Holdout metrics: accuracy, macro-F1, weighted-F1
-  - Stratified cross-validation for Decision Tree and KNN
+  - Stratified cross-validation across supervised models
 - Artifact persistence:
   - Saved scaler and trained models (`joblib`)
-  - Run metadata and metrics JSON
-  - Top feature importances and energy-cluster summary CSVs
+  - `metrics.json`, `metadata.json`, `classification_report.json`, `confusion_matrix.csv`
+  - Feature/cluster outputs and `run_summary.md`
+  - Append-only run registry: `artifacts/index.jsonl`
 - CI quality gate:
   - Lint (`ruff`), tests (`pytest`), package build
 
-## Project structure
+## Project Structure
 
 - `music_emotion_prediction.ipynb`: original exploratory notebook
 - `src/music_emotion_predictor/`: reusable package and CLI
@@ -39,62 +66,89 @@ pip install -r requirements.txt
 pip install -e .
 ```
 
-For contributor tooling (lint + tests via extras):
+Contributor tooling:
 
 ```bash
 pip install -e ".[dev]"
 ```
 
-## Run the pipeline
+## Run The Pipeline
 
-Quick smoke run with bundled sample data:
+Quick smoke run:
 
 ```bash
 music-emotion-predict --dataset data/sample_music_dataset.csv
 ```
 
-Run with your full dataset export:
+Full run (custom params):
 
 ```bash
 music-emotion-predict --dataset /path/to/278k_labelled_uri.csv --test-size 0.2 --random-state 42 --cv-folds 5
 ```
 
-Disable artifact writes:
+Disable all artifact writes:
 
 ```bash
 music-emotion-predict --no-save-artifacts
 ```
 
-Print full metrics JSON in terminal:
+Print full metrics JSON:
 
 ```bash
 music-emotion-predict --json
 ```
 
-## Tests and quality
+## Example CLI Output (Short)
 
-```bash
-python3 -m pytest
-ruff check src tests
+```text
+Holdout Metrics
+- Majority Baseline: accuracy=0.2500, macro_f1=0.1000, weighted_f1=0.1000
+- Decision Tree: accuracy=0.7500, macro_f1=0.7333, weighted_f1=0.7333
+- KNN: accuracy=0.8750, macro_f1=0.8667, weighted_f1=0.8667
+- Logistic Regression: accuracy=0.8750, macro_f1=0.8667, weighted_f1=0.8667
+- KMeans ARI: 0.4200
 ```
 
-## Artifact outputs
+## Reproducibility & Artifacts
 
-By default, each run writes a timestamped directory under `artifacts/` containing:
+Each run is parameterized (`test_size`, `random_state`, `cv_folds`) and writes a timestamped folder under `artifacts/` with models, metrics, and summaries. A global append-only registry (`artifacts/index.jsonl`) records one JSON line per run, including timestamp, optional git commit hash, dataset path hash, parameters, and key metrics. This makes runs auditable and easy to compare over time.
+
+## Artifact Outputs
+
+Per run (`artifacts/run_<UTC timestamp>/`):
 
 - `scaler.joblib`
+- `majority_baseline.joblib`
 - `decision_tree.joblib`
 - `knn.joblib`
+- `logistic_regression.joblib`
 - `metrics.json`
 - `metadata.json`
+- `classification_report.json`
+- `confusion_matrix.csv`
 - `top_features.csv`
 - `energy_cluster_summary.csv`
+- `run_summary.md`
 
-## Dataset notes
+Global registry:
+
+- `artifacts/index.jsonl`
+
+## Tests & Quality
+
+```bash
+python3 -m pytest -q
+ruff check src tests
+python3 -m build
+```
+
+## Dataset Notes
 
 - Source (Kaggle): https://www.kaggle.com/datasets/abdullahorzan/moodify-dataset
 - Expected requirements:
-  - CSV file must be non-empty
+  - CSV must be non-empty
   - `labels` column must exist
-  - feature columns must be numeric
-- Optional columns like `uri`, `Unnamed: 0`, and `Unnamed: 0.1` are dropped automatically if present.
+  - labels must be in `{Calm, Sad, Energetic, Happy}`
+  - feature columns must be numeric after cleaning
+- NaN handling is configurable via CLI (`--nan-strategy drop|impute`).
+- Optional columns like `uri` and `Unnamed:*` are dropped automatically.
