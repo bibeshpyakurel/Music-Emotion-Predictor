@@ -6,7 +6,6 @@ import pandas as pd
 
 from .validation import (
     DatasetBundle,
-    DatasetError,
     load_and_validate_dataset,
     validate_supervised_dataframe,
 )
