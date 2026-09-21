@@ -1,0 +1,9 @@
+{
+  "headlineMetric": "90.8% Decision Tree accuracy classifying mood across a 278K-track audio feature dataset",
+  "role": "Sole developer",
+  "resumeEligible": true,
+  "stack": ["Python", "scikit-learn", "Pandas", "NumPy", "Matplotlib", "pytest", "Ruff", "GitHub Actions"],
+  "oneLiner": "An end-to-end ML pipeline classifying tracks as Calm, Sad, Energetic, or Happy from tabular audio features.",
+  "startDate": "2025-01",
+  "endDate": "2025-05"
+}
